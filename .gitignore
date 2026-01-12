@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.local
+dist/
+build/
+.DS_Store
+*.log
+PREZENTARE.md
+DEMO_SCRIPT.md
+PLAN_GITHUB.md
+SETUP.md
