@@ -29,6 +29,11 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Relația manager-executant
+  managerId     String?
+  manager       User?    @relation("ManagedBy", fields: [managerId], references: [id])
+  managedUsers  User[]   @relation("ManagedBy")
+
   createdTasks  Task[]   @relation("CreatedBy")
   assignedTasks Task[]   @relation("AssignedTo")
 }
