@@ -1,11 +1,20 @@
+/*
+ * Controller pentru task-uri
+ * Gestioneaza toate operatiile CRUD pe task-uri + workflow-ul de stari
+ * 
+ * Workflow task:
+ * OPEN -> PENDING -> COMPLETED -> CLOSED
+ */
+
 const prisma = require('../lib/prisma');
 
 
+// ia toate taskurile - pentru specialist doar cele asignate lui
 exports.getAll = async (req, res) => {
     try {
         let where = {};
 
-
+        // daca e specialist, vede doar taskurile lui
         if (req.user.role === 'IT_SPECIALIST') {
             where.assignedToId = req.user.id;
         }
@@ -25,6 +34,7 @@ exports.getAll = async (req, res) => {
 };
 
 
+// ia un task dupa id
 exports.getById = async (req, res) => {
     try {
         const task = await prisma.task.findUnique({
@@ -44,6 +54,8 @@ exports.getById = async (req, res) => {
 };
 
 
+// creeaza task nou - doar managerii pot crea
+// taskul incepe cu status OPEN
 exports.create = async (req, res) => {
     try {
         const { title, description, priority } = req.body;
@@ -54,7 +66,7 @@ exports.create = async (req, res) => {
                 description,
                 priority,
                 createdById: req.user.id,
-                status: 'OPEN'
+                status: 'OPEN'  // initial e OPEN
             },
             include: {
                 createdBy: { select: { id: true, name: true } }
@@ -67,6 +79,7 @@ exports.create = async (req, res) => {
 };
 
 
+// update la task (titlu, descriere, prioritate)
 exports.update = async (req, res) => {
     try {
         const { title, description, priority } = req.body;
@@ -81,6 +94,7 @@ exports.update = async (req, res) => {
 };
 
 
+// sterge task
 exports.delete = async (req, res) => {
     try {
         await prisma.task.delete({ where: { id: req.params.id } });
@@ -91,6 +105,8 @@ exports.delete = async (req, res) => {
 };
 
 
+// aloca task la un specialist
+// schimba status din OPEN in PENDING
 exports.assign = async (req, res) => {
     try {
         const { assignedToId } = req.body;
@@ -99,6 +115,7 @@ exports.assign = async (req, res) => {
         if (!task) {
             return res.status(404).json({ error: 'Task negăsit' });
         }
+        // doar taskurile OPEN pot fi alocate
         if (task.status !== 'OPEN') {
             return res.status(400).json({ error: 'Doar task-urile OPEN pot fi alocate' });
         }
@@ -115,6 +132,9 @@ exports.assign = async (req, res) => {
 };
 
 
+// marcheaza task ca terminat
+// PENDING -> COMPLETED
+// doar specialistul care are taskul poate sa faca asta
 exports.complete = async (req, res) => {
     try {
         const task = await prisma.task.findUnique({ where: { id: req.params.id } });
@@ -125,6 +145,7 @@ exports.complete = async (req, res) => {
         if (task.status !== 'PENDING') {
             return res.status(400).json({ error: 'Doar task-urile PENDING pot fi completate' });
         }
+        // verificam ca userul curent e cel asignat
         if (task.assignedToId !== req.user.id) {
             return res.status(403).json({ error: 'Doar specialistul asignat poate completa' });
         }
@@ -140,6 +161,8 @@ exports.complete = async (req, res) => {
 };
 
 
+// inchide task-ul dupa ce e completat
+// COMPLETED -> CLOSED (doar managerul poate inchide)
 exports.close = async (req, res) => {
     try {
         const task = await prisma.task.findUnique({ where: { id: req.params.id } });
@@ -151,6 +174,7 @@ exports.close = async (req, res) => {
             return res.status(400).json({ error: 'Doar task-urile COMPLETED pot fi închise' });
         }
 
+        // punem si data cand s-a inchis
         const updatedTask = await prisma.task.update({
             where: { id: req.params.id },
             data: { status: 'CLOSED', closedAt: new Date() }
@@ -162,6 +186,8 @@ exports.close = async (req, res) => {
 };
 
 
+// istoric task-uri pt un user anume
+// folosit in pagina Team
 exports.getHistory = async (req, res) => {
     try {
         const tasks = await prisma.task.findMany({

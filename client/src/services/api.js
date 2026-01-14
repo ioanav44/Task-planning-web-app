@@ -1,14 +1,21 @@
+/*
+ * Serviciu pentru comunicare cu backend-ul
+ * Aici sunt toate request-urile HTTP catre API
+ */
+
 import axios from 'axios';
 
 
+// configuram axios cu URL-ul backendului
 const api = axios.create({
-    baseURL: 'http://localhost:3000/api',  // URL-ul backend-ului
+    baseURL: 'http://localhost:3000/api',
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
 
+// interceptor pe request - adauga tokenul automat la fiecare request
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -21,6 +28,8 @@ api.interceptors.request.use(
 );
 
 
+// interceptor pe response - daca primim 401 inseamna ca tokenul e invalid
+// si facem logout automat
 api.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -34,12 +43,14 @@ api.interceptors.response.use(
 );
 
 
+// endpoint-uri pentru autentificare
 export const authAPI = {
     login: (email, password) => api.post('/auth/login', { email, password }),
     register: (data) => api.post('/auth/register', data),
     me: () => api.get('/auth/me'),
 };
 
+// endpoint-uri pentru useri
 export const usersAPI = {
     getAll: () => api.get('/users'),
     getById: (id) => api.get(`/users/${id}`),
@@ -49,8 +60,8 @@ export const usersAPI = {
     delete: (id) => api.delete(`/users/${id}`),
 };
 
+// endpoint-uri pentru taskuri
 export const tasksAPI = {
-
     getAll: () => api.get('/tasks'),
     getById: (id) => api.get(`/tasks/${id}`),
     create: (data) => api.post('/tasks', data),
