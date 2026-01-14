@@ -5,3 +5,7 @@ dist/
 build/
 .DS_Store
 *.log
+DEMO_SCRIPT.md
+PLAN_GITHUB.md
+PREZENTARE.md
+SETUP.md
