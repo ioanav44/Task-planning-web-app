@@ -1,3 +1,8 @@
+/*
+ * Componenta principala a aplicatiei
+ * Configureaza rutele si wrapperii de autentificare
+ */
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
@@ -7,10 +12,11 @@ import Tasks from './pages/Tasks';
 import Users from './pages/Users';
 import Team from './pages/Team';
 
-// Componentă pentru rute protejate (necesită autentificare)
+// ruta protejata - daca nu esti logat te redirecteaza la login
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
 
+  // aratam spinner cat se incarca
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -19,6 +25,7 @@ function ProtectedRoute({ children }) {
     );
   }
 
+  // daca nu e autentificat, redirect la login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -26,7 +33,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// Componentă pentru rute publice (redirect dacă e deja autentificat)
+// ruta publica - daca esti deja logat te duce la dashboard
 function PublicRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
 
@@ -45,12 +52,13 @@ function PublicRoute({ children }) {
   return children;
 }
 
+// componenta principala
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Rute publice */}
+          {/* rute publice - login si register */}
           <Route
             path="/login"
             element={
@@ -68,7 +76,7 @@ function App() {
             }
           />
 
-          {/* Rute protejate */}
+          {/* rute protejate - trebuie sa fii logat */}
           <Route
             path="/dashboard"
             element={
@@ -102,7 +110,7 @@ function App() {
             }
           />
 
-          {/* Redirect default */}
+          {/* orice alta ruta duce la dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
