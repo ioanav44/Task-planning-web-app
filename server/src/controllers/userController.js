@@ -6,6 +6,11 @@
 const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 
+// Get all users
+exports.getAll = async (req, res) => {
+    try {
+        const users = await prisma.user.findMany({
+            select: { id: true, email: true, name: true, role: true, createdAt: true }
 
 // ia toti userii din baza de date
 // nu returnam parola din motive de securitate
@@ -28,6 +33,7 @@ exports.getAll = async (req, res) => {
     }
 };
 
+// Get specialists (for managers)
 
 // returneaza doar specialistii - folosit la dropdown cand aloci taskuri
 exports.getSpecialists = async (req, res) => {
@@ -42,12 +48,14 @@ exports.getSpecialists = async (req, res) => {
     }
 };
 
+// Get user by ID
 
 // ia un user dupa id
 exports.getById = async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: req.params.id },
+            select: { id: true, email: true, name: true, role: true, createdAt: true }
             select: {
                 id: true,
                 email: true,
@@ -67,6 +75,18 @@ exports.getById = async (req, res) => {
     }
 };
 
+// Create user
+exports.create = async (req, res) => {
+    try {
+        const { email, password, name, role } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await prisma.user.create({
+            data: { email, password: hashedPassword, name, role }
+        });
+
+        res.status(201).json({
+            id: user.id, email: user.email, name: user.name, role: user.role
 
 // creaza user nou (pt admin)
 exports.create = async (req, res) => {
@@ -97,6 +117,15 @@ exports.create = async (req, res) => {
     }
 };
 
+// Update user
+exports.update = async (req, res) => {
+    try {
+        const { name, role } = req.body;
+        const user = await prisma.user.update({
+            where: { id: req.params.id },
+            data: { name, role }
+        });
+        res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
 
 // update user - poate schimba nume, rol si manager
 exports.update = async (req, res) => {
@@ -121,6 +150,7 @@ exports.update = async (req, res) => {
     }
 };
 
+// Delete user
 
 // sterge user
 exports.delete = async (req, res) => {
